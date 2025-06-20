@@ -1,0 +1,171 @@
+﻿@model IEnumerable<To_Do_List.ModelView.TaskViewModel>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Tasks</h1>
+
+<h3>Uncompleted</h3>
+
+<p>
+    <a asp-action="Create" class="btn-outline-primary">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Description)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Start)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.End)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Status)
+            </th>
+            <th>
+				@Html.DisplayNameFor(model => model.IsCompleted)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Where(m=>!m.IsCompleted)) {
+        <div class="task-item" data-task-id="@item.Id">
+            <tr>
+                <td>
+                        @Html.DisplayFor(modelItem => item.Name)
+                </td>
+                <td>
+                        @Html.DisplayFor(modelItem => item.Description)
+                </td>
+                <td>
+                        @Html.DisplayFor(modelItem => item.Start)
+                </td>
+                <td>
+                        @Html.DisplayFor(modelItem => item.End)
+                </td>
+                <td>
+                        @Html.DisplayFor(modelItem => item.Status)
+                </td>
+                <td>
+                        <button class="btn btn-success complete-btn" data-task-id="@item.Id">Complete</button>
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                </td>
+            </tr>
+        </div>
+}
+    </tbody>
+</table>
+
+<h3>Completed</h3>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Description)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Start)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.End)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Status)
+            </th>
+            <th>
+                Completion
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Where(m => m.IsCompleted))
+        {
+            <div class="task-item" data-task-id="@item.Id">
+            <tr>
+                <td>
+                        @Html.DisplayFor(modelItem => item.Name)
+                </td>
+                <td>
+                        @Html.DisplayFor(modelItem => item.Description)
+                </td>
+                <td>
+                        @Html.DisplayFor(modelItem => item.Start)
+                </td>
+                <td>
+                        @Html.DisplayFor(modelItem => item.End)
+                </td>
+                <td>
+                        @Html.DisplayFor(modelItem => item.Status)
+                </td>
+                <td>
+                    <span class="badge bg-success">Completed</span>
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                </td>
+            </tr>
+            </div>
+        }
+    </tbody>
+</table>
+
+@section Scripts{
+    <script>
+        $(document).ready(function() {
+            // Handle complete button click
+            $(document).on('click', '.complete-btn', function() {
+                const taskItem = $(this).closest('.task-item');
+                const taskId = taskItem.data('task-id');
+
+                $.post('@Url.Action("ToggleComplete", "Tasks")',
+                {
+                    id: taskId,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                }, function(response) {
+                    // Move to completed list
+                    taskItem.find('button').removeClass('btn-success complete-btn')
+                        .addClass('btn-warning undo-btn')
+                        .text('Undo');
+                    $('#completed-tasks').append(taskItem);
+                });
+            });
+
+            // Handle undo button click
+            $(document).on('click', '.undo-btn', function() {
+                const taskItem = $(this).closest('.task-item');
+                const taskId = taskItem.data('task-id');
+
+                $.post('@Url.Action("ToggleComplete", "Tasks")',
+                {
+                    id: taskId,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                }, function(response) {
+                    // Move back to uncompleted list
+                    taskItem.find('button').removeClass('btn-warning undo-btn')
+                        .addClass('btn-success complete-btn')
+                        .text('Complete');
+                    $('#uncompleted-tasks').append(taskItem);
+                });
+            });
+        });
+    </script>
+}
