@@ -38,7 +38,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var item in Model.Where(m => !m.IsCompleted))
+            @foreach (var item in Model.Where(m => !m.IsCompleted && m.Status != To_Do_List.ModelView.TaskStatus.Cancelled))
             {
                 <div class="task-card" data-task-id="@item.Id">
                     <tr>
@@ -100,7 +100,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var item in Model.Where(m => m.IsCompleted))
+            @foreach (var item in Model.Where(m => m.IsCompleted && m.Status != To_Do_List.ModelView.TaskStatus.Cancelled))
             {
                 <div class="task-card" data-task-id="@item.Id">
                     <tr>
@@ -132,6 +132,62 @@
                         </td>
                     </tr>
                 </div>
+            }
+    </tbody>
+</table>
+</div>
+
+<h3>Cancelled</h3>
+
+<div id="cancelled-tasks">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model.Name)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Description)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Start)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.End)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Status)
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Where(m => m.Status==To_Do_List.ModelView.TaskStatus.Cancelled))
+            {
+                <div class="task-card" data-task-id="@item.Id">
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Name)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Description)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Start)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.End)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Status)
+                    </td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                        <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                        <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                    </td>
+                </tr>
+    </div>
             }
     </tbody>
 </table>

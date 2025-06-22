@@ -16,10 +16,6 @@ namespace To_Do_List.Models
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            //modelBuilder.Entity<Task>()
-            //    .HasOne(Task => Task.User)
-            //    .WithMany(user => user.Tasks)
-            //    .HasForeignKey(Task => Task.UserId);
 
         }
     }

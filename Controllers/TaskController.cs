@@ -38,6 +38,10 @@ namespace To_Do_List.Controllers
         {
             var tasks = await _taskService.GetTasks();
             var taskViewModels = _mapper.Map<IEnumerable<TaskViewModel>>(tasks);
+            foreach(var task in taskViewModels)
+            {
+                task.Status = Status(task);
+            }
             return View(taskViewModels);
         }
 
@@ -106,27 +110,37 @@ namespace To_Do_List.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit(int id, TaskViewModel model)
         {
+            // checks if model is valid
             if(!ModelState.IsValid)
             {
                 return RedirectToAction(nameof(Edit));
             }
-            if(model.Status == ModelView.TaskStatus.Completed)
+            // assigns task to completed if status is completed.
+            if (model.Status == ModelView.TaskStatus.Completed)
                 model.IsCompleted = true;
 
+            // get the current user.
             var user = await GetCurrentUser();
 
+            // mapping the view model to the task model.
             var task = _mapper.Map<Models.Task>(model);
+            // set the user.
             task.User = user;
             task.UserId = user.Id;
+            //updating the task
             _taskService.Update(task);
+            // saving changes
             await _taskService.Save();
+
             return RedirectToAction(nameof(Index));
         }
 
         // GET: TaskController/Delete/5
         public async Task<ActionResult> Delete(int id)
         {
+            // get the task from database
             var task = await _taskService.GetTaskById(id);
+            // mapping the task model to view model.
             var taskVM = _mapper.Map<TaskViewModel>(task);
             return View(taskVM);
         }
@@ -136,8 +150,11 @@ namespace To_Do_List.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Delete(int id, TaskViewModel model)
         {
-            if(await _taskService.Delete(id))
-                return RedirectToAction(nameof(Index));
+            if (await _taskService.Delete(id))
+            {
+                await _taskService.Save();
+                return RedirectToAction(nameof(Index));            
+            }
             ModelState.AddModelError(string.Empty, "Error deleting task.");
             return View(model);
         }
@@ -179,8 +196,9 @@ namespace To_Do_List.Controllers
 
 
         // set task status depends on completion and range of date.
-        private ModelView.TaskStatus Status(Models.Task task)
+        private ModelView.TaskStatus Status(ModelView.TaskViewModel model)
         {
+            var task = _mapper.Map<Models.Task>(model);
             if (task.IsCompleted)
                 return ModelView.TaskStatus.Completed;
             else if (!task.IsCompleted && !IsTaskEnded(task))
