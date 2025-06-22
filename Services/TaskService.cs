@@ -69,14 +69,9 @@ namespace To_Do_List.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task<bool> Update(Models.Task task)
+        public void Update(Models.Task task)
         {
-            var t = await _context.Tasks.FindAsync(task.Id);
-            if (t == null)
-                return await System.Threading.Tasks.Task.FromResult(false);
-
-            await _context.Entry(t).ReloadAsync();
-            return await System.Threading.Tasks.Task.FromResult(true);
+            _context.Tasks.Update(task);
         }
     }
 }

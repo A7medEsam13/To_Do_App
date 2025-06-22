@@ -1,8 +1,10 @@
 ﻿
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using To_Do_List.ModelView;
 
 
@@ -24,10 +26,15 @@ namespace To_Do_List.Controllers
             _userManager = userManager;
         }
 
+        // get the current user from the http context.
+        private async Task<ApplicationUser> GetCurrentUser()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            return user;
+        }
+
         // GET: TaskController
         public async Task<ActionResult> Index()
-        
-        
         {
             var tasks = await _taskService.GetTasks();
             var taskViewModels = _mapper.Map<IEnumerable<TaskViewModel>>(tasks);
@@ -62,7 +69,7 @@ namespace To_Do_List.Controllers
             var task = _mapper.Map<Models.Task>(model);
 
             // set the user id from the current user.
-            var user = _userManager.GetUserAsync(User);
+            var user = GetCurrentUser();
 
             if (user == null)
             {
@@ -79,60 +86,108 @@ namespace To_Do_List.Controllers
         }
 
         // GET: TaskController/Edit/5
-        public ActionResult Edit(int id)
+        public async Task<ActionResult> Edit(int id )
         {
-            return View();
+            var task = await _taskService.GetTaskById(id);
+
+            var taskVM = _mapper.Map<TaskViewModel>(task);
+            ViewBag.StatusOptions = Enum.GetValues(typeof(ModelView.TaskStatus))
+                .Cast<ModelView.TaskStatus>()
+                .Select(s => new SelectListItem
+                {
+                    Value = s.ToString(),
+                    Text = s.ToString()
+                }).ToList();
+            return View(taskVM);
         }
 
         // POST: TaskController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public async Task<ActionResult> Edit(int id, TaskViewModel model)
         {
-            try
+            if(!ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Edit));
             }
-            catch
-            {
-                return View();
-            }
+            if(model.Status == ModelView.TaskStatus.Completed)
+                model.IsCompleted = true;
+
+            var user = await GetCurrentUser();
+
+            var task = _mapper.Map<Models.Task>(model);
+            task.User = user;
+            task.UserId = user.Id;
+            _taskService.Update(task);
+            await _taskService.Save();
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: TaskController/Delete/5
-        public ActionResult Delete(int id)
+        public async Task<ActionResult> Delete(int id)
         {
-            return View();
+            var task = await _taskService.GetTaskById(id);
+            var taskVM = _mapper.Map<TaskViewModel>(task);
+            return View(taskVM);
         }
 
         // POST: TaskController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public async Task<ActionResult> Delete(int id, TaskViewModel model)
         {
-            try
-            {
+            if(await _taskService.Delete(id))
                 return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
+            ModelState.AddModelError(string.Empty, "Error deleting task.");
+            return View(model);
         }
 
         [HttpPost]
+        [Route("task/togglecompleted/{id}")]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> ToogleCompleted(int id)
+        public async Task<ActionResult> ToggleCompleted(int id)
         {
             var task = await _taskService.GetTaskById(id);
-            if (task == null) 
-            { 
-                return NotFound(); 
+            if (task == null)
+            {
+                return NotFound();
             }
             task.IsCompleted = !task.IsCompleted;
             await _taskService.Save();
 
-            return Ok(new { taskId = task.Id, isCompleted = task.IsCompleted });
+            return Json(new
+            {
+                success = true,
+                IsCompleted = task.IsCompleted,
+                Id = task.Id
+            });
         }
+
+        // date range validation.
+        private bool IsValidDateRange(DateOnly start, DateOnly end)
+        {
+            // Check if the start date is before the end date.
+            return start <= end;
+        }
+
+
+        // checks if task range is ended 
+        private bool IsTaskEnded(Models.Task task)
+        {
+            return task.End < DateOnly.FromDateTime(DateTime.Today);
+        }
+
+
+        // set task status depends on completion and range of date.
+        private ModelView.TaskStatus Status(Models.Task task)
+        {
+            if (task.IsCompleted)
+                return ModelView.TaskStatus.Completed;
+            else if (!task.IsCompleted && !IsTaskEnded(task))
+                return ModelView.TaskStatus.Pending;
+            else 
+                return ModelView.TaskStatus.Cancelled;
+        }
+
     }
 }
