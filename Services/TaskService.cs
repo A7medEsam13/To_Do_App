@@ -51,13 +51,21 @@ namespace To_Do_List.Services
             }
 
             var user = await _userManager.GetUserAsync(httpContext.User);
-            
-            var tasks = await _context.Tasks
-                .Where(t => t.UserId == user.Id)
-                .ToListAsync();
-            return tasks;
-        }
 
+            try
+            {
+                var tasks = await _context.Tasks
+                    .Where(t => t.UserId == user.Id)
+                    .ToListAsync();
+                return tasks;
+
+            }
+            catch
+            {
+                return new List<Models.Task>();
+
+            }
+        }
         public async System.Threading.Tasks.Task MarkAsCompleted(int id)
         {
             var task = await GetTaskById(id);

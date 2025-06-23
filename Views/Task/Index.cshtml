@@ -1,4 +1,56 @@
-﻿@model IEnumerable<To_Do_List.ModelView.TaskViewModel>
+﻿@* <div id="partial-container">  
+    @{
+         Html.RenderPartial("_TasksPartial");  
+    }  
+</div>  
+
+<button id="reload-btn" class="btn btn-primary">Refresh Tasks</button>  
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#reload-btn').on('click', function() {
+                // Show loading indicator
+                $('#partial-container').html('<div class="loading-spinner">Loading...</div>');
+
+                $.ajax({
+                    url: '@Url.Action("GetTasksPartial", "Task")',
+                    type: 'GET',
+                    dataType: 'html', // Explicitly expect HTML response
+                    cache: false, // Prevent browser caching
+                    success: function(data) {
+                        if (data && data.trim().length > 0) {
+                            $('#partial-container').html(data);
+                        } else {
+                            $('#partial-container').html('<div class="alert alert-warning">No content received</div>');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("AJAX Error:", {
+                            Status: status,
+                            Error: error,
+                            Response: xhr.responseText
+                        });
+
+                        $('#partial-container').html(
+                            '<div class="alert alert-danger">' +
+                            'Failed to load tasks. ' +
+                            '<button class="btn btn-sm btn-link retry-btn">Retry</button>' +
+                            '</div>'
+                        );
+
+                        // Add retry functionality
+                        $('.retry-btn').on('click', function() {
+                            $('#reload-btn').trigger('click');
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+} *@
+
+@model IEnumerable<To_Do_List.ModelView.TaskViewModel>
 
 @{
     ViewData["Title"] = "Index";
@@ -41,32 +93,32 @@
             @foreach (var item in Model.Where(m => !m.IsCompleted && m.Status != To_Do_List.ModelView.TaskStatus.Cancelled))
             {
                 <div class="task-card" data-task-id="@item.Id">
-                    <tr>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Name)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Description)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Start)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.End)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Status)
-                        </td>
-                        <td>
-                            <button class="btn btn-success complete-btn" data-task-id="@item.Id">Complete</button>
-                        </td>
-                        <td>
-                            <a asp-action="Edit" asp-route-id="@item.Id" >Edit</a> |
-                            <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                            <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-                        </td>
-                    </tr>
-                </div>
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Name)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Description)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Start)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.End)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Status)
+                    </td>
+                    <td>
+                        <button class="btn btn-success complete-btn" data-task-id="@item.Id">Complete</button>
+                    </td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                        <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                        <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                    </td>
+                </tr>
+    </div>
             }
         </tbody>
     </table>
@@ -103,35 +155,35 @@
             @foreach (var item in Model.Where(m => m.IsCompleted && m.Status != To_Do_List.ModelView.TaskStatus.Cancelled))
             {
                 <div class="task-card" data-task-id="@item.Id">
-                    <tr>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Name)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Description)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Start)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.End)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Status)
-                        </td>
-                        <td>
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Name)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Description)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Start)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.End)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Status)
+                    </td>
+                    <td>
                         <button class="btn btn-warning undo-btn"
                                 data-task-id="@item.Id">
                             Undo
                         </button>
-                        </td>
-                        <td>
-                            <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                            <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                            <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-                        </td>
-                    </tr>
-                </div>
+                    </td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                        <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                        <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                    </td>
+                </tr>
+    </div>
             }
     </tbody>
 </table>
@@ -162,7 +214,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var item in Model.Where(m => m.Status==To_Do_List.ModelView.TaskStatus.Cancelled))
+            @foreach (var item in Model.Where(m => m.Status == To_Do_List.ModelView.TaskStatus.Cancelled))
             {
                 <div class="task-card" data-task-id="@item.Id">
                 <tr>
@@ -191,6 +243,11 @@
             }
     </tbody>
 </table>
+</div>
+<div>
+    <button id="full-reload-btn" class="btn btn-primary">
+        <i class="fas fa-sync-alt"></i> Reload Full Page
+    </button>
 </div>
 
 @section Scripts {
@@ -248,4 +305,79 @@
             });
         });
     </script>
+    <script>
+                    $(document).ready(function() {
+            // Cache DOM elements
+            const $reloadBtn = $('#full-reload-btn');
+            const $mainContent = $('main');
+            const originalBtnHtml = $reloadBtn.html();
+
+            // Use event delegation for persistent click handling
+            $(document).off('click', '#full-reload-btn').on('click', '#full-reload-btn', function() {
+                const $btn = $(this);
+                $btn.prop('disabled', true)
+                    .html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Reloading...');
+
+                $.ajax({
+                    url: '@Url.Action("GetFullIndexContent", "Task")',
+                    type: 'GET',
+                    dataType: 'html',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'text/html'
+                    },
+                    cache: false,
+                    success: function(html) {
+                        try {
+                            const $parsedHtml = $(html);
+                            const newContent = $parsedHtml.filter('main').html() ||
+                                             $parsedHtml.find('main').html();
+
+                            if (!newContent) throw new Error('No main content found');
+
+                            $mainContent.fadeOut(200, function() {
+                                $(this).html(newContent).fadeIn(200, function() {
+                                    initPageScripts();
+                                });
+                            });
+                        } catch (e) {
+                            console.error('Content parsing failed:', e);
+                            showError('Failed to process page content');
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error("Reload failed:", {
+                            status: xhr.status,
+                            response: xhr.responseText
+                        });
+                        showError('Failed to reload page. Please try again.');
+                    },
+                    complete: function() {
+                        $btn.prop('disabled', false)
+                            .html(originalBtnHtml);
+                    }
+                });
+            });
+
+            function initPageScripts() {
+                // Initialize Bootstrap components
+                $('[data-bs-toggle="tooltip"]').tooltip();
+                $('[data-bs-toggle="popover"]').popover();
+
+                // Rebind other event handlers as needed
+            }
+
+            function showError(message) {
+                const $alert = $(`
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `).hide().prependTo('body').fadeIn();
+
+                setTimeout(() => $alert.alert('close'), 5000);
+            }
+        });
+    </script>
+
 }

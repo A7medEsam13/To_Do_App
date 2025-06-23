@@ -34,16 +34,22 @@ namespace To_Do_List.Controllers
         }
 
         // GET: TaskController
-        public async Task<ActionResult> Index()
+        public async Task<ActionResult> IndexAsync()
         {
             var tasks = await _taskService.GetTasks();
-            var taskViewModels = _mapper.Map<IEnumerable<TaskViewModel>>(tasks);
-            foreach(var task in taskViewModels)
-            {
-                task.Status = Status(task);
-            }
-            return View(taskViewModels);
+            var taskVMs = _mapper.Map<IEnumerable<TaskViewModel>>(tasks) ?? new List<TaskViewModel>();
+            return View(taskVMs);
         }
+
+        
+        [HttpGet]
+        public async Task<IActionResult> GetFullIndexContent()
+        {
+            var tasks = await _taskService.GetTasks();
+            var taskVMs = _mapper.Map<IEnumerable<TaskViewModel>>(tasks) ?? new List<TaskViewModel>();
+            return View("Index", taskVMs); // Returns full view
+        }
+
 
         // GET: TaskController/Details/5
         public ActionResult Details(int id)
@@ -86,7 +92,7 @@ namespace To_Do_List.Controllers
             // adding the model to task table
             await _taskService.Create(task);
             await _taskService.Save();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(IndexAsync));
         }
 
         // GET: TaskController/Edit/5
@@ -132,7 +138,7 @@ namespace To_Do_List.Controllers
             // saving changes
             await _taskService.Save();
 
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(IndexAsync));
         }
 
         // GET: TaskController/Delete/5
@@ -153,7 +159,7 @@ namespace To_Do_List.Controllers
             if (await _taskService.Delete(id))
             {
                 await _taskService.Save();
-                return RedirectToAction(nameof(Index));            
+                return RedirectToAction(nameof(IndexAsync));            
             }
             ModelState.AddModelError(string.Empty, "Error deleting task.");
             return View(model);

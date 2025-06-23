@@ -18,5 +18,6 @@ namespace To_Do_List.Models
             base.OnModelCreating(modelBuilder);
 
         }
+        public DbSet<To_Do_List.ModelView.TaskViewModel> TaskViewModel { get; set; } = default!;
     }
 }
